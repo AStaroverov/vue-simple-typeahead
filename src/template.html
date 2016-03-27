@@ -1,0 +1,30 @@
+<div class="vue-typeahead__container">
+
+  <input
+    type="text"
+    v-el:input
+    v-model="query"
+    class="vue-typeahead__input"
+    :class="class"
+    :name="name"
+    :placeholder="placeholder"
+    :autocomplete="autocomplete"
+    :disabled="disabled"
+    @keydown.up.prevent="up"
+    @keydown.down.prevent="down"
+    @keydown.enter.prevent="enter"
+    @keydown.esc.prevent="esc"
+    @blur="blur"
+    @focus="focus" />
+
+  <div class="vue-typeahead__matches"
+       v-show="matchesState"
+       :style="{width: inputWidth}">
+    <div v-for="item in items | filterBy query | setFilteredItems"
+         v-text="item"
+         :class="{ '_active' : activeItem == $index }"
+         @click="click($index)">
+    </div>
+  </div>
+
+</div>

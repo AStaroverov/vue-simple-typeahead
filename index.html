@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vue typeaheadt</title>
+  <link rel="stylesheet" href="/dist/vue-typeahead.css" charset="utf-8">
+</head>
+<body>
+  <div id="app">
+    <form @submit.prevent="submitForm()">
+      <vue-typeahead
+        v-ref:typeahead
+        style="width: 100%"
+        :items="items"
+        :query.sync="query"
+        :validate="validateFunc"
+        :selected-item.sync="selectedItem"
+      ></vue-typeahead>
+      <button type="submit">select</button>
+    </form>
+
+    <div v-show="alert">
+      <h3>ERROR</h3>
+      <span v-text="alert"></span>
+    </div>
+  </div>
+
+
+  <script src="https://code.jquery.com/jquery-2.2.2.js" integrity="sha256-4/zUCqiq0kqxhZIyp4G0Gk+AOtCJsY1TA00k5ClsZYE=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.16/vue.js" charset="utf-8"></script>
+  <script src="./dist/vue-typeahead.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          items: [],
+          query: '',
+          selectedItem: {},
+          alert: ''
+        }
+      },
+      created() {
+        var that = this
+
+        $.get('http://jsonplaceholder.typicode.com/users/')
+          .then(function(data) {
+            that.items = data.reduce(function(all, current) {
+              return all.concat(current.name)
+            }, [])
+          })
+      },
+      methods: {
+        submitForm() {
+          this.$refs.typeahead.hit()
+          // OR
+          // this.$broadcast('hit')
+          // this.$els.typeahead.$emit('hit')
+        },
+        validateFunc: function(selectedItem, filteredItems) {
+          var value = selectedItem.value
+          var index = selectedItem.index
+          var alert = ''
+          var valid = true
+          var minLength = 2
+          var maxLength = 20
+          var alerts = {
+            emptyQuery: 'Query is empty',
+            wrongLength: 'query should be >= 1 and <= 4',
+            noMatches: 'no matches'
+          }
+
+          if (!value) {
+            valid = false
+            alert = alerts.emptyQuery
+          } else {
+            var len = value.length
+
+            if (len < minLength
+            ||  len > maxLength) {
+              valid = false
+              alert = alerts.wrongLength
+            } else if (filteredItems.length === 0) {
+              alert = alerts.noMatches
+            }
+          }
+
+          this.alert = alert
+
+          return valid
+        },
+      },
+      components: {
+        'vue-typeahead': window.vueTypeahead.default(Vue)
+      }
+    })
+  </script>
+</body>
+</html>

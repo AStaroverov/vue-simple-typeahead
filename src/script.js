@@ -1,11 +1,5 @@
-import './style.sss'
-import template from './template.html'
-import throttle from 'lodash.throttle'
-
-export default function(Vue) {
-return {
+export default {
   name: 'vue-simple-typeahead',
-  template,
   props: {
     items: {
       type: Array,
@@ -39,7 +33,7 @@ return {
       type: Function,
       default: _ => true
     },
-    modifyValue: {
+    modifyItems: {
       type: Function,
       default: _ => _
     },
@@ -90,8 +84,7 @@ return {
       }
 
       this.changeQuery && this.changeQuery(this.query_)
-    },
-    matchesState: 'setInputWidth'
+    }
   },
   events: {
     'hit': 'hit' /*for external trigger*/
@@ -156,12 +149,6 @@ return {
         this.changeSelectedItem && this.changeSelectedItem(selectedItem)
         this.$nextTick(_ => this.forceHide = true)
       }
-    },
-    setInputWidth() {
-      this.inputWidth = this.matchesState
-        ? `${this.$refs.input.offsetWidth}px`
-        : ''
     }
   }
-}
 }

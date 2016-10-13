@@ -25,7 +25,7 @@
    >
     <div
       v-for='(item, index) in filteredItems'
-      v-html='modifyValue(item, query_)'
+      v-html='modifyItems(item, query_)'
       :class='{ "_active" : activeItem === index }'
       @click='click(index)'
     >

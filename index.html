@@ -14,7 +14,7 @@
         :items="items"
         :query="query"
         :validate="validateFunc"
-        :modify-value="modifyValueFunc"
+        :modify-items="modifyItemsFunc"
         :change-selected-item="value => selectedItem = value"
         :custom-filter='customFilter'
       ></vue-typeahead>
@@ -91,12 +91,12 @@
 
           return valid
         },
-        modifyValueFunc(val, query/* === this.query*/) {
-          return val.replace(query, `<strong>${query}</strong>`)
+        modifyItemsFunc(text, query/* === this.query*/) {
+          return text.replace(query, `<strong>${query}</strong>`)
         }
       },
       components: {
-        'vue-typeahead': window.vueTypeahead.default(Vue)
+        'vue-typeahead': window.vueTypeahead
       }
     })
   </script>

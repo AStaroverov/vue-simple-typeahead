@@ -1,4 +1,5 @@
 var webpack = require('webpack');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = {
   entry: "./src/index.js",
@@ -26,7 +27,7 @@ module.exports = {
       },
       {
         test: /\.sss$/,
-        loader: "style-loader!css-loader!postcss-loader?parser=sugarss",
+        loader: ExtractTextPlugin.extract("style-loader", "css-loader!postcss-loader?parser=sugarss"),
         exclude: /node_modules/
       },
     ]
@@ -36,7 +37,10 @@ module.exports = {
       require('postcss-nested'),
       require('autoprefixer'),
     ]
-  }
+  },
+  plugins: [
+    new ExtractTextPlugin("vue-typeahead.css")
+  ]
 }
 
 if (process.env.NODE_ENV === 'production') {
@@ -53,6 +57,7 @@ if (process.env.NODE_ENV === 'production') {
         warnings: false
       }
     }),
+    new ExtractTextPlugin("vue-typeahead.min.css")
   ];
 } else {
   module.exports.devtool = '#source-map'

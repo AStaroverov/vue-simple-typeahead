@@ -1,8 +1,10 @@
 import './style.sss'
 import template from './template.html'
+import throttle from 'lodash.throttle'
 
 export default function(Vue) {
 return {
+  name: 'vue-simple-typeahead',
   template,
   props: {
     items: {
@@ -22,26 +24,36 @@ return {
       default: ''
     },
     disabled: {
-      type: String,
+      type: Boolean,
       default: false
     },
     autocomplete: {
       type: String,
       default: 'off'
     },
+    customFilter: {
+      type: Function
+    },
     // VALIDATION
     validate: {
       type: Function,
       default: _ => true
+    },
+    modifyValue: {
+      type: Function,
+      default: _ => _
     },
     // TWO WAY
     query: {
       twoWay: true,
       default: ''
     },
-    selectedItem: {
-      twoWay: true,
-    }
+    changeSelectedItem: {
+      type: Function
+    },
+    changeQuery: {
+      type: Function
+    },
   },
   data() {
     return {
@@ -50,105 +62,106 @@ return {
       forceHide: true,
       activeItem: -1,
       filteredItems: [],
-      inputWidth: ''
-    };
+      inputWidth: '',
+      class_: this.class,
+      query_: this.query
+    }
   },
   computed: {
     matchesState() {
-      return this.inFocus && !this.forceHide;
+      return this.inFocus && !this.forceHide
     },
+    filteredItems() {
+      if (this.customFilter) {
+        return this.customFilter(this.query_, this.items)
+      } else {
+        return this.items.filter(item => {
+          return item.indexOf(this.query_) !== -1
+        })
+      }
+    }
   },
   watch: {
-    ['query']() {
-      if (this.query) {
-        this.forceHide = false;
+    query_() {
+      if (this.query_) {
+        this.forceHide = false
       } else {
-        this.forceHide = true;
+        this.forceHide = true
       }
+
+      this.changeQuery && this.changeQuery(this.query_)
     },
-    'matchesState': 'setInputWidth'
+    matchesState: 'setInputWidth'
   },
   events: {
     'hit': 'hit' /*for external trigger*/
   },
-  filters: {
-    setFilteredItems(val) {
-      return this.filteredItems = val;
-    }
-  },
-  attached() {
-    let debounceSetInputWidth = Vue.util.debounce(this.setInputWidth, 150)
-
-    this.setInputWidth()
-    window.addEventListener('resize', debounceSetInputWidth)
-  },
   methods: {
     focus() {
-      this.inFocus = true;
+      this.inFocus = true
     },
     blur(e) {
       setTimeout(() => {
-        this.inFocus = false;
-      }, 130);
+        this.inFocus = false
+      }, 130)
     },
     esc() {
-      this.query = '';
-      this.activeItem = -1;
-      this.selectedItem = {};
+      this.query_ = ''
+      this.activeItem = -1
+      this.selectedItem = {}
     },
     up() {
       if (this.matchesState && this.activeItem >= 0) {
-        --this.activeItem;
+        --this.activeItem
       }
     },
     down() {
-      if (this.matchesState
-          && this.activeItem < this.filteredItems.length - 1) {
-        ++this.activeItem;
+      if (this.matchesState && this.activeItem < this.filteredItems.length - 1) {
+        ++this.activeItem
       }
     },
     enter() {
-      this.hit();
+      this.hit()
     },
     click(index) {
-      this.activeItem = index;
-      this.hit();
+      this.activeItem = index
+      this.hit()
     },
     hit() {
-      if (this.filteredItems.length === 1
-      && this.query === this.filteredItems[0]) {
-        this.activeItem = 0;
+      if (this.filteredItems.length === 1 && this.query_) {
+        this.query_ = this.filteredItems[0]
+        this.activeItem = 0
       }
 
-      let selectedItem;
+      let selectedItem
 
       if (this.activeItem >= 0) {
-        let value = this.filteredItems[this.activeItem];
+        let value = this.filteredItems[this.activeItem]
 
         selectedItem = {
           value,
           index: this.items.indexOf(value),
-        };
+        }
       } else {
         selectedItem = {
-          index: this.activeItem,
-          value: this.query
-        };
+          value: this.query_,
+          index: this.activeItem
+        }
       }
 
-      this.query = selectedItem.value;
+      this.query_ = selectedItem.value
 
       if (this.validate(selectedItem, [].concat(this.filteredItems))) {
-        this.selectedItem = selectedItem;
-        this.activeItem = -1;
-        this.$nextTick(_ => this.forceHide = true);
+        this.activeItem = -1
+        this.changeSelectedItem && this.changeSelectedItem(selectedItem)
+        this.$nextTick(_ => this.forceHide = true)
       }
     },
     setInputWidth() {
       this.inputWidth = this.matchesState
-        ? `${this.$els.input.offsetWidth}px`
-        : '';
+        ? `${this.$refs.input.offsetWidth}px`
+        : ''
     }
   }
 }
-};
+}

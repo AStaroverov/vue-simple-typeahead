@@ -9,12 +9,14 @@
   <div id="app">
     <form @submit.prevent="submitForm()">
       <vue-typeahead
-        v-ref:typeahead
-        style="width: 100%"
+        ref='typeahead'
+        style="width: 100px"
         :items="items"
-        :query.sync="query"
+        :query="query"
         :validate="validateFunc"
-        :selected-item.sync="selectedItem"
+        :modify-value="modifyValueFunc"
+        :change-selected-item="value => selectedItem = value"
+        :custom-filter='customFilter'
       ></vue-typeahead>
       <button type="submit">select</button>
     </form>
@@ -26,8 +28,8 @@
   </div>
 
 
-  <script src="https://code.jquery.com/jquery-2.2.2.js" integrity="sha256-4/zUCqiq0kqxhZIyp4G0Gk+AOtCJsY1TA00k5ClsZYE=" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.16/vue.js" charset="utf-8"></script>
+  <script src="https://code.jquery.com/jquery-3.1.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.2/vue.js" charset="utf-8"></script>
   <script src="./dist/vue-typeahead.js"></script>
   <script>
     new Vue({
@@ -41,23 +43,26 @@
         }
       },
       created() {
-        var that = this
-
-        $.get('http://jsonplaceholder.typicode.com/users/')
-          .then(function(data) {
-            that.items = data.reduce(function(all, current) {
-              return all.concat(current.name)
-            }, [])
-          })
+        $.get('http://localhost:3000/users/')
+        .then(data => {
+          this.items = data.reduce((all, current) => {
+            return all.concat(current.name)
+          }, [])
+        })
       },
       methods: {
+        customFilter(query, items) {
+          return items.filter(item => {
+            return item.indexOf(query) !== -1
+          })
+        },
         submitForm() {
           this.$refs.typeahead.hit()
           // OR
           // this.$broadcast('hit')
           // this.$els.typeahead.$emit('hit')
         },
-        validateFunc: function(selectedItem, filteredItems) {
+        validateFunc(selectedItem, filteredItems) {
           var value = selectedItem.value
           var index = selectedItem.index
           var alert = ''
@@ -66,7 +71,7 @@
           var maxLength = 20
           var alerts = {
             emptyQuery: 'Query is empty',
-            wrongLength: 'query should be >= 1 and <= 4',
+            wrongLength: 'query should be >= 1',
             noMatches: 'no matches'
           }
 
@@ -74,10 +79,7 @@
             valid = false
             alert = alerts.emptyQuery
           } else {
-            var len = value.length
-
-            if (len < minLength
-            ||  len > maxLength) {
+            if (value.length < minLength) {
               valid = false
               alert = alerts.wrongLength
             } else if (filteredItems.length === 0) {
@@ -89,6 +91,9 @@
 
           return valid
         },
+        modifyValueFunc(val, query/* === this.query*/) {
+          return val.replace(query, `<strong>${query}</strong>`)
+        }
       },
       components: {
         'vue-typeahead': window.vueTypeahead.default(Vue)

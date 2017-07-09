@@ -3,102 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <title>Vue typeaheadt</title>
-  <link rel="stylesheet" href="/dist/vue-typeahead.css" charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="dist/vue-typeahead.css" />
+  <link rel="stylesheet" type="text/css" href="dist/vue-typeahead-default-theme.css" />
+  <style>
+    .typeahead__item:hover,
+    .typeahead__item.active {
+      background-color: #eee;
+    }
+  </style>
 </head>
 <body>
   <div id="app">
+    <div v-show="alert">
+      <h3>ERROR</h3>
+      <span v-text="alert"></span>
+    </div>
     <form @submit.prevent="submitForm()">
       <vue-typeahead
         ref='typeahead'
         style="width: 100px"
         :items="items"
-        :query="query"
-        :validate="validateFunc"
-        :modify-items="modifyItemsFunc"
-        :change-selected-item="value => selectedItem = value"
-        :custom-filter='customFilter'
-      ></vue-typeahead>
+        :query.sync="query"
+        :filter='customFilter'
+        :on-select='validateFunc'
+      >
+        <template slot='item' scope="props">
+          <div
+            class='typeahead__item'
+            :class='{ active: props.active }'
+          >
+            {{modifyItemsFunc(props.item)}} - {{props.active}}
+          </div>
+        </template>
+      </vue-typeahead>
       <button type="submit">select</button>
     </form>
-
-    <div v-show="alert">
-      <h3>ERROR</h3>
-      <span v-text="alert"></span>
-    </div>
   </div>
 
-
   <script src="https://code.jquery.com/jquery-3.1.1.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.2/vue.js" charset="utf-8"></script>
-  <script src="./dist/vue-typeahead.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.3/vue.js" charset="utf-8"></script>
+  <script src="./dist/bundle.js"></script>
   <script>
-    new Vue({
-      el: '#app',
-      data() {
-        return {
-          items: [],
-          query: '',
-          selectedItem: {},
-          alert: ''
-        }
-      },
-      created() {
-        $.get('http://localhost:3000/users/')
+    (async function () {
+      const items = await $.get('http://localhost:3000/users/')
         .then(data => {
-          this.items = data.reduce((all, current) => {
+          return data.reduce((all, current) => {
             return all.concat(current.name)
           }, [])
-        })
-      },
-      methods: {
-        customFilter(query, items) {
-          return items.filter(item => {
-            return item.indexOf(query) !== -1
-          })
-        },
-        submitForm() {
-          this.$refs.typeahead.hit()
-          // OR
-          // this.$broadcast('hit')
-          // this.$els.typeahead.$emit('hit')
-        },
-        validateFunc(selectedItem, filteredItems) {
-          var value = selectedItem.value
-          var index = selectedItem.index
-          var alert = ''
-          var valid = true
-          var minLength = 2
-          var maxLength = 20
-          var alerts = {
-            emptyQuery: 'Query is empty',
-            wrongLength: 'query should be >= 1',
-            noMatches: 'no matches'
-          }
+      })
 
-          if (!value) {
-            valid = false
-            alert = alerts.emptyQuery
-          } else {
-            if (value.length < minLength) {
-              valid = false
-              alert = alerts.wrongLength
-            } else if (filteredItems.length === 0) {
-              alert = alerts.noMatches
+      new Vue({
+        el: '#app',
+        data() {
+          return {
+            items: items,
+            query: '',
+            alert: ''
+          }
+        },
+        methods: {
+          customFilter(items, query) {
+            return items.filter(item => {
+              return item.indexOf(query) !== -1
+            })
+          },
+          submitForm() {
+            this.$refs.typeahead.hit()
+          },
+          validateFunc(match) {
+            var value = match && this.query
+            var alert = ''
+            var valid = true
+            var minLength = 2
+            var maxLength = 20
+            var alerts = {
+              emptyQuery: 'Query is empty',
+              wrongLength: 'query should be >= 1',
+              noMatches: 'no matches'
             }
+
+            if (!value) {
+              valid = false
+              alert = alerts.emptyQuery
+            } else {
+              if (value.length < minLength) {
+                valid = false
+                alert = alerts.wrongLength
+              } else if (filteredItems.length === 0) {
+                alert = alerts.noMatches
+              }
+            }
+
+            this.alert = alert
+
+            return valid
+          },
+          modifyItemsFunc(text, query/* === this.query*/) {
+            return text.replace(query, `<strong>${query}</strong>`)
           }
-
-          this.alert = alert
-
-          return valid
         },
-        modifyItemsFunc(text, query/* === this.query*/) {
-          return text.replace(query, `<strong>${query}</strong>`)
+        components: {
+          'vue-typeahead': window.vueTypeahead
         }
-      },
-      components: {
-        'vue-typeahead': window.vueTypeahead
-      }
-    })
+      })
+    })()
   </script>
 </body>
 </html>

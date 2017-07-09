@@ -1,14 +1,7 @@
 export default {
   name: 'vue-simple-typeahead',
   props: {
-    items: {
-      type: Array,
-      default: []
-    },
-    class: {
-      type: String,
-      default: ''
-    },
+    // input props
     name: {
       type: String,
       default: 'text'
@@ -17,37 +10,36 @@ export default {
       type: String,
       default: ''
     },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
     autocomplete: {
       type: String,
       default: 'off'
     },
-    customFilter: {
-      type: Function
+    disabled: {
+      type: Boolean,
+      default: false
     },
-    // VALIDATION
+
+    // components props
+    items: {
+      type: Array,
+      default: []
+    },
+    query: {
+      default: ''
+    },
     validate: {
       type: Function,
       default: _ => true
     },
-    modifyItems: {
+    filter: {
       type: Function,
-      default: _ => _
+      default: (items, query) => items.filter(item => {
+        return item.indexOf(query) !== -1
+      }) || []
     },
-    // TWO WAY
-    query: {
-      twoWay: true,
-      default: ''
-    },
-    changeSelectedItem: {
+    onSelect: {
       type: Function
-    },
-    changeQuery: {
-      type: Function
-    },
+    }
   },
   data() {
     return {
@@ -55,10 +47,7 @@ export default {
       inFocus: false,
       forceHide: true,
       activeItem: -1,
-      filteredItems: [],
-      inputWidth: '',
-      class_: this.class,
-      query_: this.query
+      inputWidth: ''
     }
   },
   computed: {
@@ -66,24 +55,16 @@ export default {
       return this.inFocus && !this.forceHide
     },
     filteredItems() {
-      if (this.customFilter) {
-        return this.customFilter(this.query_, this.items)
-      } else {
-        return this.items.filter(item => {
-          return item.indexOf(this.query_) !== -1
-        })
-      }
+      return this.filter(this.items, this.query)
     }
   },
   watch: {
-    query_() {
-      if (this.query_) {
+    query() {
+      if (this.query !== '') {
         this.forceHide = false
       } else {
         this.forceHide = true
       }
-
-      this.changeQuery && this.changeQuery(this.query_)
     }
   },
   events: {
@@ -99,7 +80,7 @@ export default {
       }, 130)
     },
     esc() {
-      this.query_ = ''
+      this.query = ''
       this.activeItem = -1
       this.selectedItem = {}
     },
@@ -121,34 +102,23 @@ export default {
       this.hit()
     },
     hit() {
-      if (this.filteredItems.length === 1 && this.query_) {
-        this.query_ = this.filteredItems[0]
-        this.activeItem = 0
+      let query
+      let match = true
+
+      if (this.filteredItems.length === 1) {
+        query = this.filteredItems[0]
+      } else if (this.filteredItems.length > 1 && this.activeItem > 0) {
+        query = this.filteredItems[this.activeItem]
       }
 
-      let selectedItem
-
-      if (this.activeItem >= 0) {
-        let value = this.filteredItems[this.activeItem]
-
-        selectedItem = {
-          value,
-          index: this.items.indexOf(value),
-        }
-      } else {
-        selectedItem = {
-          value: this.query_,
-          index: this.activeItem
-        }
-      }
-
-      this.query_ = selectedItem.value
-
-      if (this.validate(selectedItem, [].concat(this.filteredItems))) {
+      if (query) {
         this.activeItem = -1
-        this.changeSelectedItem && this.changeSelectedItem(selectedItem)
-        this.$nextTick(_ => this.forceHide = true)
+        this.forceHide = true
+      } else {
+        match = false
       }
+
+      this.onSelect(match)
     }
   }
 }

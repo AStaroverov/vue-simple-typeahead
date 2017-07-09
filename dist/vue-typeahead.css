@@ -1,27 +1,21 @@
-
 .vue-typeahead__container {
   display: inline-block;
   position: relative;
   z-index: 1;
-  vertical-align: middle;
-}
+  vertical-align: middle; }
+
 .vue-typeahead__input {
-  width: 100%;
-}
+  width: 100%; }
+
 .vue-typeahead__matches {
   position: absolute;
   bottom: 0;
   left: 0;
   transform: translateY(100%);
-  background-color: white;
-}
-.vue-typeahead__matches > div {
+  background-color: white; }
+  .vue-typeahead__matches > div {
     cursor: pointer;
     padding: 10px;
-    color: black;
-}
-.vue-typeahead__matches > div._active, .vue-typeahead__matches > div:hover {
-      background-color: #eee;
-}
-
-/*# sourceMappingURL=vue-typeahead.css.map*/
+    color: black; }
+    .vue-typeahead__matches > div:hover {
+      background-color: #eee; }

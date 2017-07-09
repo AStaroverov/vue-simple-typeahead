@@ -1,3 +1,2 @@
-<template src='./template.html' />
-<style src='./style.sass' lang='sass' />
-<script src='./script.js' />
+<template src='./template.html'></template>
+<script src='./script.js'></script>

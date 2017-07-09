@@ -3,9 +3,8 @@
   <input
     ref='input'
     type='text'
-    v-model='query_'
+    v-model='query'
     class='vue-typeahead__input'
-    :class='class_'
     :name='name'
     :placeholder='placeholder'
     :autocomplete='autocomplete'
@@ -23,13 +22,15 @@
     v-show='matchesState'
     :style='{width: inputWidth}'
    >
-    <div
+
+    <slot name='item'
       v-for='(item, index) in filteredItems'
-      v-html='modifyItems(item, query_)'
-      :class='{ "_active" : activeItem === index }'
+      :item='item'
+      :index='index'
+      :active='activeItem === index'
       @click='click(index)'
-    >
-    </div>
+    />
+
   </div>
 
 </div>
